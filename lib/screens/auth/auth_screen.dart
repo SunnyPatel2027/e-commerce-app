@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../login/login_screen.dart';
+// import '../login/login_screen.dart';
 import 'login/login_screen.dart';
 
 class AuthScreen extends StatelessWidget {
