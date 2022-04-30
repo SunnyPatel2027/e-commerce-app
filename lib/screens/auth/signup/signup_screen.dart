@@ -1,23 +1,27 @@
+import 'dart:io';
+
 import 'package:e_commerce/controller/firebase_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 
 class SignUpScreen extends GetWidget<FirebaseController> {
-   SignUpScreen({Key? key}) : super(key: key);
+  SignUpScreen({Key? key}) : super(key: key);
 
-   final _formkey = GlobalKey<FormState>();
-  // final TextEditingController _email = TextEditingController();
-  //  final TextEditingController _name = TextEditingController();
-  //  final TextEditingController _password = TextEditingController();
+  final _formkey = GlobalKey<FormState>();
   FirebaseController _firebaseController = Get.put(FirebaseController());
-   @override
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.all(12),
-        width: MediaQuery.of(context).size.width,
+        width: MediaQuery
+            .of(context)
+            .size
+            .width,
         child: Form(
           key: _formkey,
           child: Column(
@@ -25,14 +29,26 @@ class SignUpScreen extends GetWidget<FirebaseController> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               GestureDetector(
-                onTap: (){},
-                child: Container(
-                  child: Icon(Icons.person_add,color: Colors.grey,size: 50,),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(100)
-                  ),
-                  padding: EdgeInsets.all(30),
+                onTap: () async {
+                  final ImagePicker _picker = ImagePicker();
+                  controller.photo.value = await _picker.pickImage(
+                      source: ImageSource.gallery);
+                },
+                child: Obx(
+                   () {
+                    return Container(
+                      // height: 200,
+                      width: 120,
+                      child: (controller.photo.value == null) ? Icon(
+                        Icons.person_add, color: Colors.grey, size: 50,) :
+                      Image.file(File(controller.photo.value!.path), fit: BoxFit.fill ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: EdgeInsets.all(30),
+                    );
+                  }
                 ),
               ),
               SizedBox(height: 15,),
@@ -50,7 +66,9 @@ class SignUpScreen extends GetWidget<FirebaseController> {
                       contentPadding: EdgeInsets.all(20)
                   ),
                   validator: (value) {
-                    if (value.toString().isEmpty) {
+                    if (value
+                        .toString()
+                        .isEmpty) {
                       return 'Enter name.';
                     } else
                       return null;
@@ -73,7 +91,9 @@ class SignUpScreen extends GetWidget<FirebaseController> {
                       contentPadding: EdgeInsets.all(20)
                   ),
                   validator: (value) {
-                    if (value.toString().isEmpty ||
+                    if (value
+                        .toString()
+                        .isEmpty ||
                         !value.toString().contains("@gmail.com")) {
                       return 'email is not valid.';
                     } else
@@ -98,9 +118,13 @@ class SignUpScreen extends GetWidget<FirebaseController> {
                   ),
                   obscureText: true,
                   validator: (value) {
-                    if (value.toString().isEmpty) {
+                    if (value
+                        .toString()
+                        .isEmpty) {
                       return 'password is not valid.';
-                    } else if (value.toString().length <= 6) {
+                    } else if (value
+                        .toString()
+                        .length <= 6) {
                       return "Password is to small";
                     } else
                       return null;
@@ -124,9 +148,12 @@ class SignUpScreen extends GetWidget<FirebaseController> {
                   ),
                   obscureText: true,
                   validator: (value) {
-                    if (value.toString().isEmpty) {
+                    if (value
+                        .toString()
+                        .isEmpty) {
                       return 'Enter confirm password.';
-                    } else if (value.toString()!=_firebaseController.password.text) {
+                    } else
+                    if (value.toString() != _firebaseController.password.text) {
                       return "Does not match password.";
                     } else
                       return null;
@@ -137,17 +164,18 @@ class SignUpScreen extends GetWidget<FirebaseController> {
               SizedBox(height: 15,),
               ElevatedButton(
                 style: ButtonStyle(
-                  padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 25,vertical: 10)),
+                  padding: MaterialStateProperty.all(
+                      EdgeInsets.symmetric(horizontal: 25, vertical: 10)),
                   backgroundColor: MaterialStateProperty.all(Colors.red),
                 ),
-                onPressed: (){
-                  final validity =_formkey.currentState!.validate();
+                onPressed: () {
+                  final validity = _formkey.currentState!.validate();
                   FocusScope.of(context).unfocus();
-                  if(validity){
+                  if (validity) {
                     _firebaseController.createUser();
                   }
                 },
-                child: Text("Sign up",style: TextStyle(color: Colors.black),),)
+                child: Text("Sign up", style: TextStyle(color: Colors.black),),)
             ],
           ),
         ),

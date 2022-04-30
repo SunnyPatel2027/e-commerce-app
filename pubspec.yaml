@@ -34,6 +34,7 @@ dependencies:
   cloud_firestore:
   intl:
   fluttertoast:
+  firebase_storage:
 
 
 
@@ -42,10 +43,12 @@ dependencies:
   cupertino_icons: ^1.0.2
   get: ^4.6.1
   shared_preferences: ^2.0.13
+  image_picker: ^0.8.5
 
 dependency_overrides:
   firebase_auth_platform_interface: 6.1.11
   cloud_firestore_platform_interface: 5.4.13
+  firebase_storage_platform_interface: 4.0.14
 
 dev_dependencies:
   flutter_test:
