@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_commerce/screens/auth/auth_screen.dart';
 import 'package:e_commerce/screens/home_screen.dart';
@@ -9,6 +9,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../books.dart';
 
 class FirebaseController extends GetxController {
   FirebaseAuth _auth = FirebaseAuth.instance;
@@ -29,6 +31,30 @@ class FirebaseController extends GetxController {
   void onInit() {
     _firebaseUser.bindStream(_auth.authStateChanges());
   }
+
+  void dataUpload() async{
+    for(var item in books){
+      var price = 200+Random().nextInt(1000);
+      var mrp =Random().nextInt(price)+price;
+      await FirebaseFirestore.instance.collection("books").doc(item["isbn"]).set({
+        'title' : item["title"],
+        'pageCount' : item["pageCount"],
+        'publishedDate' : item["publishedDate"]["date"],
+        'thumbnailUrl' : item["thumbnailUrl"],
+        'shortDescription' : item["shortDescription"],
+        'longDescription' : item["longDescription"],
+        'status' : item["status"],
+        'authors' : item["authors"],
+        'categories' : item["categories"],
+        'price' : price.toString(),
+        'MRP' : mrp.toString(),
+        "isbn" : item['isbn']
+      });
+      print("Data Upload Successfully.");
+    }
+  }
+
+
 
   void createUser() async {
     await _auth

@@ -12,7 +12,7 @@ class IsSignedIn extends GetWidget<FirebaseController> {
     return Obx(() {
       return Get
           .find<FirebaseController>()
-          .user != null ? HomeScreen() : AuthScreen();
+          .user != null ?  HomeScreen() : AuthScreen();
     });
   }
 }
