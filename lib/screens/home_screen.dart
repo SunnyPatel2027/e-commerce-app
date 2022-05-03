@@ -15,7 +15,7 @@ class HomeScreen extends GetWidget<FirebaseController> {
 
   @override
   Widget build(BuildContext context) {
-    ListController listController= Get.find<ListController>();
+    ListController listController= Get.put<ListController>(ListController());
     return SafeArea(
       child: Scaffold(
         drawer: Drawer(
@@ -37,20 +37,17 @@ class HomeScreen extends GetWidget<FirebaseController> {
                                 if (snapshot.hasData) {
                                   final prefs = snapshot.data;
                                   image = prefs?.getString("imageURL") ?? "";
-                                } else {
-                                  image =
-                                      "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpixabay.com%2Fvectors%2Fblank-profile-picture-mystery-man-973460%2F&psig=AOvVaw08BxnnspnFPrJc5UaPZoOd&ust=1651401941406000&source=images&cd=vfe&ved=0CAwQjRxqFwoTCPCCj-PNu_cCFQAAAAAdAAAAABAO";
                                 }
                                 return Container(
                                   width: 100,
-                                  child: Image.network(
+                                  child: image.isEmpty?Icon(Icons.person):Image.network(
                                     image,
                                     fit: BoxFit.fill,
                                   ),
                                   decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: Colors.white),
-                                  padding: EdgeInsets.all(35),
+                                  padding: EdgeInsets.all(30),
                                 );
                               }),
                         ],

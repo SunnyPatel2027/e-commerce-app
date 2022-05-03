@@ -7,6 +7,6 @@ class InstanceBinding extends Bindings{
   void dependencies() {
     // TODO: implement dependencies
     Get.lazyPut<FirebaseController>(() => FirebaseController());
-    Get.lazyPut<ListController>(() => ListController());
+    // Get.lazyPut<ListController>(() => ListController());
   }
 }

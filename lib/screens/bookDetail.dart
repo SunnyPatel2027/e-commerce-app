@@ -4,11 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookDetail extends StatelessWidget {
   final Book book;
-   BookDetail( {Key? key, required this.book}) : super(key: key);
+
+  BookDetail({Key? key, required this.book}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,7 @@ class BookDetail extends StatelessWidget {
                                   image = prefs?.getString("imageURL") ?? "";
                                 } else {
                                   image =
-                                      "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpixabay.com%2Fvectors%2Fblank-profile-picture-mystery-man-973460%2F&psig=AOvVaw08BxnnspnFPrJc5UaPZoOd&ust=1651401941406000&source=images&cd=vfe&ved=0CAwQjRxqFwoTCPCCj-PNu_cCFQAAAAAdAAAAABAO";
+                                  "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpixabay.com%2Fvectors%2Fblank-profile-picture-mystery-man-973460%2F&psig=AOvVaw08BxnnspnFPrJc5UaPZoOd&ust=1651401941406000&source=images&cd=vfe&ved=0CAwQjRxqFwoTCPCCj-PNu_cCFQAAAAAdAAAAABAO";
                                 }
                                 return Container(
                                   width: 100,
@@ -66,7 +68,7 @@ class BookDetail extends StatelessWidget {
                             return Text(
                               "$name",
                               style:
-                                  TextStyle(color: Colors.white, fontSize: 15),
+                              TextStyle(color: Colors.white, fontSize: 15),
                             );
                           }),
                       SizedBox(
@@ -84,7 +86,7 @@ class BookDetail extends StatelessWidget {
                             return Text(
                               "$email",
                               style:
-                                  TextStyle(color: Colors.white, fontSize: 15),
+                              TextStyle(color: Colors.white, fontSize: 15),
                             );
                           })
                     ],
@@ -114,7 +116,7 @@ class BookDetail extends StatelessWidget {
         ),
         appBar: AppBar(
           backgroundColor: Colors.indigoAccent,
-          title: Center(child: Text("Book Store")),
+          title: Center(child: Text("Book Details")),
           actions: [
             Stack(
               children: [
@@ -139,37 +141,54 @@ class BookDetail extends StatelessWidget {
         body: SingleChildScrollView(
           physics: BouncingScrollPhysics(),
           child: Container(
-            padding: EdgeInsets.all(20),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: Column(
               // mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  child: Text(
-                    "${book.title}",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigoAccent,
-                        fontSize: 22),
-                    // maxLines: ,
-                  ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Get.back(),
+                        child: Icon(Icons.arrow_back_ios,size: 25,)),
+                    SizedBox(width: 10,),
+                    Expanded(
+                      child: Container(
+                        // width: double.infinity,
+                        child: Text(
+                          "${book.title}",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigoAccent,
+                              fontSize: 24),
+                          // maxLines: ,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(
                   height: 10,
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                  decoration: BoxDecoration(
-                      color: Colors.red.shade200,
-                      borderRadius: BorderRadius.circular(25)),
-                  child: Text(
-                    "Even Rosten",
-                    style: TextStyle(
-                        color: Colors.red.shade600,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
-                  ),
+                Wrap(
+                  children: book.authors
+                      .map((e) =>
+                  e.isEmpty ? SizedBox() : Container(
+                    margin: EdgeInsets.all(2),
+                    padding: EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 15),
+                    decoration: BoxDecoration(
+                        color: Colors.red.shade200,
+                        borderRadius: BorderRadius.circular(25)),
+                    child: Text(
+                      "$e",
+                      style: TextStyle(
+                          color: Colors.red.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15),
+                    ),
+                  ))
+                      .toList(),
                 ),
                 SizedBox(
                   height: 10,
@@ -177,10 +196,19 @@ class BookDetail extends StatelessWidget {
                 Stack(children: [
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 15),
-                    height: MediaQuery.of(context).size.height / 1.95,
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height / 1.95,
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                        color: Colors.red.shade200,
+                      // color: Colors.red.shade200,
                         borderRadius: BorderRadius.circular(25)),
+                    child: book.thumbnailUrl == null
+                        ? Center(
+                        child: Icon(Icons.broken_image_outlined, size: 80,))
+                        : Image.network(
+                      book.thumbnailUrl.toString(), fit: BoxFit.fill,),
                   ),
                   Positioned(
                     top: 0,
@@ -193,7 +221,8 @@ class BookDetail extends StatelessWidget {
                           children: [
                             // ${(int.parse((book.price)) * 100 / int.parse((book.MRP))).toStringAsFixed(0)}
                             Text(
-                              "45%",
+                              "${(int.parse(book.price) * 100 /
+                                  int.parse(book.MRP)).toStringAsFixed(0)}%",
                               style: TextStyle(color: Colors.white),
                             ),
                             Text("off", style: TextStyle(color: Colors.white)),
@@ -208,7 +237,7 @@ class BookDetail extends StatelessWidget {
                       style: TextStyle(color: Colors.black87),
                     ),
                     Text(
-                      "500",
+                      "${book.MRP}",
                       style: TextStyle(
                           color: Colors.black87,
                           decoration: TextDecoration.lineThrough),
@@ -225,7 +254,7 @@ class BookDetail extends StatelessWidget {
                       style: TextStyle(color: Colors.black87, fontSize: 14),
                     ),
                     Text(
-                      " ₹250",
+                      " ₹${book.price}",
                       style: TextStyle(color: Colors.red, fontSize: 18),
                     ),
                   ],
@@ -240,7 +269,7 @@ class BookDetail extends StatelessWidget {
                       style: TextStyle(color: Colors.black87, fontSize: 14),
                     ),
                     Text(
-                      " ₹250",
+                      " ₹${int.parse(book.MRP) - int.parse(book.price)}",
                       style: TextStyle(color: Colors.red, fontSize: 18),
                     ),
                   ],
@@ -255,20 +284,20 @@ class BookDetail extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                        Colors.yellow.shade200,
-                        Colors.deepOrangeAccent
-                      ])),
+                            Colors.yellow.shade200,
+                            Colors.deepOrangeAccent
+                          ])),
                   child: Center(
                       child: Text(
-                    "Add to Cart",
-                    style: TextStyle(fontWeight: FontWeight.w400),
-                  )),
+                        "Add to Cart",
+                        style: TextStyle(fontWeight: FontWeight.w400),
+                      )),
                 ),
                 SizedBox(
                   height: 20,
                 ),
                 Text(
-                  "About this Item",
+                  "About This Item",
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
@@ -291,9 +320,16 @@ class BookDetail extends StatelessWidget {
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 18),
                       ),
-                      SizedBox(height: 5,),
+                      SizedBox(
+                        height: 5,
+                      ),
                       Text(
-                          "This first book on the union of two rapidly growing approaches to programming--visual programming and object technology--provides a window on a subject of increasing commercial importance. It is an introduction and reference for cutting-edge developers, and for researchers, students, and enthusiasts interested in the design of visual OOP languages and environments.  Visual Object-Oriented Programming includes chapters on both emerging research and on a few classic systems, that together can help those who design visual object-oriented programming systems avoid some known pitfalls.",style: TextStyle(fontSize: 17,fontStyle: FontStyle.italic,fontWeight: FontWeight.bold,color: Colors.indigo.shade300))
+                          "${book.longDescription}",
+                          style: TextStyle(
+                              fontSize: 17,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo.shade300))
                     ],
                   ),
                 )
