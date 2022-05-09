@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 class LoginScreen extends GetWidget<FirebaseController> {
    LoginScreen({Key? key}) : super(key: key);
   final _formkey = GlobalKey<FormState>();
@@ -11,6 +12,9 @@ class LoginScreen extends GetWidget<FirebaseController> {
    FirebaseController _firebaseController = Get.put(FirebaseController());
   @override
   Widget build(BuildContext context) {
+
+    late GoogleSignInAccount _userObj;
+    GoogleSignIn _googleSignIn = GoogleSignIn();
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.all(12),
@@ -85,7 +89,43 @@ class LoginScreen extends GetWidget<FirebaseController> {
                 onPressed: (){
                   controller.logIn();
                 },
-                child: Text("Log In",style: TextStyle(color: Colors.black),),)
+                child: Text("Log In",style: TextStyle(color: Colors.black),),),
+              SizedBox(height: 20,),
+              // StatefulBuilder(
+              //   builder :(context,setState)  =>
+              //       GestureDetector(
+              //     onTap: ()async{
+              //       _googleSignIn.signIn().then((userData){
+              //         setState(() {
+              //           _userObj=userData!;
+              //         });
+              //       });
+              //     },
+              //     child: Container(
+              //       padding: EdgeInsets.all(10),
+              //       child: Row(
+              //         mainAxisAlignment: MainAxisAlignment.center,
+              //         children: [
+              //           Container(
+              //             height: 30,
+              //             width: 20,
+              //             child: Image.asset(
+              //               "assets/google.png",
+              //
+              //             ),
+              //             padding: EdgeInsets.all(2),
+              //             decoration: BoxDecoration(
+              //               color: Colors.white,
+              //               shape: BoxShape.circle,
+              //               border: Border.all(color: Colors.purple,width: 4),
+              //             ),
+              //           ),
+              //           Text("   Login with google acount"),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ) ,
             ],
           ),
         ),

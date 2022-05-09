@@ -1,20 +1,34 @@
+import 'package:e_commerce/controller/cart_controller.dart';
 import 'package:e_commerce/controller/firebase_controller.dart';
 import 'package:e_commerce/modals/book.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_navigation/src/snackbar/snackbar.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'addToCart_screen.dart';
+import 'home_screen.dart';
+import 'my_order_screen.dart';
 
 class BookDetail extends StatelessWidget {
   final Book book;
+  final bool isCart;
+  var qty;
 
-  BookDetail({Key? key, required this.book}) : super(key: key);
+  BookDetail({Key? key, required this.book, required this.isCart, this.qty})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    FirebaseController controller = Get.find<FirebaseController>();
+    FirebaseController firebasecontroller = Get.find<FirebaseController>();
+    CartController cartController = Get.find<CartController>();
     return SafeArea(
       child: Scaffold(
         drawer: Drawer(
@@ -38,7 +52,7 @@ class BookDetail extends StatelessWidget {
                                   image = prefs?.getString("imageURL") ?? "";
                                 } else {
                                   image =
-                                  "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpixabay.com%2Fvectors%2Fblank-profile-picture-mystery-man-973460%2F&psig=AOvVaw08BxnnspnFPrJc5UaPZoOd&ust=1651401941406000&source=images&cd=vfe&ved=0CAwQjRxqFwoTCPCCj-PNu_cCFQAAAAAdAAAAABAO";
+                                      "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpixabay.com%2Fvectors%2Fblank-profile-picture-mystery-man-973460%2F&psig=AOvVaw08BxnnspnFPrJc5UaPZoOd&ust=1651401941406000&source=images&cd=vfe&ved=0CAwQjRxqFwoTCPCCj-PNu_cCFQAAAAAdAAAAABAO";
                                 }
                                 return Container(
                                   width: 100,
@@ -68,7 +82,7 @@ class BookDetail extends StatelessWidget {
                             return Text(
                               "$name",
                               style:
-                              TextStyle(color: Colors.white, fontSize: 15),
+                                  TextStyle(color: Colors.white, fontSize: 15),
                             );
                           }),
                       SizedBox(
@@ -86,7 +100,7 @@ class BookDetail extends StatelessWidget {
                             return Text(
                               "$email",
                               style:
-                              TextStyle(color: Colors.white, fontSize: 15),
+                                  TextStyle(color: Colors.white, fontSize: 15),
                             );
                           })
                     ],
@@ -97,12 +111,15 @@ class BookDetail extends StatelessWidget {
                   child: Column(
                     children: [
                       ListTile(
+                        onTap: () {
+                          Get.to(MyOrderScreen());
+                        },
                         leading: Icon(Icons.work),
                         title: Text("My Orders"),
                       ),
                       ListTile(
                         onTap: () {
-                          controller.logOut();
+                          firebasecontroller.logOut();
                         },
                         leading: Icon(Icons.logout),
                         title: Text("Logout"),
@@ -120,22 +137,45 @@ class BookDetail extends StatelessWidget {
           actions: [
             Stack(
               children: [
-                Positioned(
-                  top: 3,
-                  left: 3,
-                  child: Container(
-                    padding: EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                        color: Colors.indigo, shape: BoxShape.circle),
-                    child: Text(
-                      "3",
-                      style: TextStyle(fontSize: 10, color: Colors.white),
-                    ),
-                  ),
-                ),
-                IconButton(onPressed: () {}, icon: Icon(Icons.shopping_cart))
+                IconButton(
+                    onPressed: () {
+                      Get.to(AddToCartScreen());
+                    },
+                    icon: Icon(Icons.shopping_cart)),
+                Obx(() {
+                  return StreamBuilder(
+                      stream: FirebaseFirestore.instance
+                          .collection("users")
+                          .doc(firebasecontroller.user)
+                          .collection("Cart")
+                          .snapshots(),
+                      builder: (context, AsyncSnapshot snapshot) {
+                        List count = [];
+                        if (snapshot.hasData) {
+                          for (var element in snapshot.data!.docs) {
+                            count.add(Book.fromJson(element.data()));
+                          }
+                        }
+                        return count.length == 0
+                            ? Container()
+                            : Positioned(
+                                top: 3,
+                                left: 3,
+                                child: Container(
+                                    padding: EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                        color: Colors.indigo,
+                                        shape: BoxShape.circle),
+                                    child: Text(
+                                      "${(count.length)}",
+                                      style: TextStyle(
+                                          fontSize: 10, color: Colors.white),
+                                    )),
+                              );
+                      });
+                }),
               ],
-            ),
+            )
           ],
         ),
         body: SingleChildScrollView(
@@ -149,9 +189,14 @@ class BookDetail extends StatelessWidget {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => Get.back(),
-                        child: Icon(Icons.arrow_back_ios,size: 25,)),
-                    SizedBox(width: 10,),
+                        onTap: () => Get.back(),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          size: 25,
+                        )),
+                    SizedBox(
+                      width: 10,
+                    ),
                     Expanded(
                       child: Container(
                         // width: double.infinity,
@@ -172,22 +217,23 @@ class BookDetail extends StatelessWidget {
                 ),
                 Wrap(
                   children: book.authors
-                      .map((e) =>
-                  e.isEmpty ? SizedBox() : Container(
-                    margin: EdgeInsets.all(2),
-                    padding: EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 15),
-                    decoration: BoxDecoration(
-                        color: Colors.red.shade200,
-                        borderRadius: BorderRadius.circular(25)),
-                    child: Text(
-                      "$e",
-                      style: TextStyle(
-                          color: Colors.red.shade600,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15),
-                    ),
-                  ))
+                      .map((e) => e.isEmpty
+                          ? SizedBox()
+                          : Container(
+                              margin: EdgeInsets.all(2),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 15),
+                              decoration: BoxDecoration(
+                                  color: Colors.red.shade200,
+                                  borderRadius: BorderRadius.circular(25)),
+                              child: Text(
+                                "$e",
+                                style: TextStyle(
+                                    color: Colors.red.shade600,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15),
+                              ),
+                            ))
                       .toList(),
                 ),
                 SizedBox(
@@ -196,19 +242,21 @@ class BookDetail extends StatelessWidget {
                 Stack(children: [
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 15),
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height / 1.95,
+                    height: MediaQuery.of(context).size.height / 1.95,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      // color: Colors.red.shade200,
+                        // color: Colors.red.shade200,
                         borderRadius: BorderRadius.circular(25)),
                     child: book.thumbnailUrl == null
                         ? Center(
-                        child: Icon(Icons.broken_image_outlined, size: 80,))
+                            child: Icon(
+                            Icons.broken_image_outlined,
+                            size: 80,
+                          ))
                         : Image.network(
-                      book.thumbnailUrl.toString(), fit: BoxFit.fill,),
+                            book.thumbnailUrl.toString(),
+                            fit: BoxFit.fill,
+                          ),
                   ),
                   Positioned(
                     top: 0,
@@ -221,8 +269,7 @@ class BookDetail extends StatelessWidget {
                           children: [
                             // ${(int.parse((book.price)) * 100 / int.parse((book.MRP))).toStringAsFixed(0)}
                             Text(
-                              "${(int.parse(book.price) * 100 /
-                                  int.parse(book.MRP)).toStringAsFixed(0)}%",
+                              "${(int.parse(book.price) * 100 / int.parse(book.MRP)).toStringAsFixed(0)}%",
                               style: TextStyle(color: Colors.white),
                             ),
                             Text("off", style: TextStyle(color: Colors.white)),
@@ -247,52 +294,230 @@ class BookDetail extends StatelessWidget {
                 SizedBox(
                   height: 9,
                 ),
-                Row(
-                  children: [
-                    Text(
-                      "Price:",
-                      style: TextStyle(color: Colors.black87, fontSize: 14),
-                    ),
-                    Text(
-                      " ₹${book.price}",
-                      style: TextStyle(color: Colors.red, fontSize: 18),
-                    ),
-                  ],
-                ),
+                isCart == true
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                "Price:",
+                                style: TextStyle(
+                                    color: Colors.black87, fontSize: 14),
+                              ),
+                              Text(
+                                " ₹${book.price}",
+                                style:
+                                    TextStyle(color: Colors.red, fontSize: 18),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                "Quntity:",
+                                style: TextStyle(
+                                    color: Colors.black87, fontSize: 14),
+                              ),
+                              Text(
+                                " ${qty}",
+                                style: TextStyle(
+                                    color: Colors.redAccent, fontSize: 18),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Text(
+                            "Price:",
+                            style:
+                                TextStyle(color: Colors.black87, fontSize: 14),
+                          ),
+                          Text(
+                            " ₹${book.price}",
+                            style: TextStyle(color: Colors.red, fontSize: 18),
+                          ),
+                        ],
+                      ),
                 SizedBox(
                   height: 8,
                 ),
-                Row(
-                  children: [
-                    Text(
-                      "You save:",
-                      style: TextStyle(color: Colors.black87, fontSize: 14),
-                    ),
-                    Text(
-                      " ₹${int.parse(book.MRP) - int.parse(book.price)}",
-                      style: TextStyle(color: Colors.red, fontSize: 18),
-                    ),
-                  ],
-                ),
+                isCart == true
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                "Total Amount:",
+                                style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                " ₹${int.parse(book.price) * qty}",
+                                style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                "You save:",
+                                style: TextStyle(
+                                    color: Colors.black87, fontSize: 14),
+                              ),
+                              Text(
+                                " ₹${int.parse(book.MRP) - int.parse(book.price)}",
+                                style:
+                                    TextStyle(color: Colors.red, fontSize: 15),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Text(
+                            "You save:",
+                            style:
+                                TextStyle(color: Colors.black87, fontSize: 14),
+                          ),
+                          Text(
+                            " ₹${int.parse(book.MRP) - int.parse(book.price)}",
+                            style: TextStyle(color: Colors.red, fontSize: 18),
+                          ),
+                        ],
+                      ),
                 SizedBox(
                   height: 8,
                 ),
-                Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.yellow.shade200,
-                            Colors.deepOrangeAccent
-                          ])),
-                  child: Center(
-                      child: Text(
-                        "Add to Cart",
-                        style: TextStyle(fontWeight: FontWeight.w400),
-                      )),
-                ),
+                isCart == true
+                    ? GestureDetector(
+                        onTap: () async {
+                          cartController.buyProduct(book, qty);
+                          cartController.removeCart(book);
+                          Get.back();
+                        },
+                        child: Container(
+                          height: 55,
+                          decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                Colors.yellow.shade200,
+                                Colors.deepOrangeAccent
+                              ])),
+                          child: Center(
+                              child: Text(
+                            "Buy Now",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 18),
+                          )),
+                        ),
+                      )
+                    : StreamBuilder(
+                        stream: FirebaseFirestore.instance
+                            .collection("order")
+                            .doc(firebasecontroller.user)
+                            .collection("product")
+                            .snapshots(),
+                        builder: (context, AsyncSnapshot snapshot) {
+                          List doc = [];
+                          if (snapshot.hasData) {
+                            snapshot.data.docs.forEach((field) {
+                              String id = (field.data()! as Map)["isbn"];
+                              doc.add(id);
+                            });
+                            print(doc);
+                          }
+                          return doc.contains(book.isbn)
+                              ? SizedBox()
+                              : Column(
+                                  children: [
+                                    doc.contains(book.isbn)?SizedBox():
+                                    GestureDetector(
+                                      onTap: () async {
+                                        List productName = [];
+                                        QuerySnapshot data =
+                                            await FirebaseFirestore
+                                                .instance
+                                                .collection("users")
+                                                .doc(firebasecontroller.user)
+                                                .collection("Cart")
+                                                .where("isbn",
+                                                    isEqualTo: book.isbn)
+                                                .get();
+                                        data.docs.forEach((field) {
+                                          String id =
+                                              (field.data()! as Map)["isbn"];
+                                          productName.add(id);
+                                        });
+                                        print("productName $productName");
+                                        if (productName.contains(book.isbn)) {
+                                          Get.snackbar("ALREADY ADDED",
+                                              "You already add this product.",
+                                              snackPosition:
+                                                  SnackPosition.BOTTOM);
+                                        } else {
+                                          cartController.addProduct(book);
+                                        }
+                                      },
+                                      child: Container(
+                                        height: 55,
+                                        decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                              Colors.yellow.shade200,
+                                              Colors.deepOrangeAccent
+                                            ])),
+                                        child: Center(
+                                            child: Text(
+                                          "Add to Cart",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 18),
+                                        )),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 15,
+                                    ),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        cartController.buyProduct(book, qty);
+                                      },
+                                      child: Container(
+                                        height: 55,
+                                        decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                              Colors.yellow.shade200,
+                                              Colors.deepOrangeAccent
+                                            ])),
+                                        child: Center(
+                                            child: Text(
+                                          "Buy Now",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 18),
+                                        )),
+                                      ),
+                                    )
+                                  ],
+                                );
+                        }),
                 SizedBox(
                   height: 20,
                 ),
@@ -323,8 +548,7 @@ class BookDetail extends StatelessWidget {
                       SizedBox(
                         height: 5,
                       ),
-                      Text(
-                          "${book.longDescription}",
+                      Text("${book.longDescription}",
                           style: TextStyle(
                               fontSize: 17,
                               fontStyle: FontStyle.italic,

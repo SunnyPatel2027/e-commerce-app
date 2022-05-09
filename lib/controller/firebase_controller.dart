@@ -48,7 +48,8 @@ class FirebaseController extends GetxController {
         'categories' : item["categories"],
         'price' : price.toString(),
         'MRP' : mrp.toString(),
-        "isbn" : item['isbn']
+        "isbn" : item['isbn'],
+
       });
       print("Data Upload Successfully.");
     }
@@ -72,7 +73,7 @@ class FirebaseController extends GetxController {
         'username': name.text,
         'email': email.text,
         'uid': uid.toString(),
-        'imageURL': downloadURL
+        'imageURL': downloadURL,
       });
 
       await getUserDetails();

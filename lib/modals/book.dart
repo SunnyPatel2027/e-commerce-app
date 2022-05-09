@@ -11,11 +11,14 @@ String bookToJson(List<Book> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class Book {
+
   Book({
+     this.quntity,
+    required  this.count,
     required this.title,
     required this.isbn,
-    required this.pageCount,
-    required this.publishedDate,
+     this.pageCount,
+     this.publishedDate,
     required this.thumbnailUrl,
     required this.shortDescription,
     required this.longDescription,
@@ -23,13 +26,14 @@ class Book {
     required this.authors,
     required this.categories,
     required this.MRP,
-    required this.price,
+    required this.price, required ubid,
   });
 
+  int? count;
   String title;
   String isbn;
-  int pageCount;
-  String publishedDate;
+  int? pageCount;
+  String? publishedDate;
   String? thumbnailUrl;
   String? shortDescription;
   String? longDescription;
@@ -38,6 +42,8 @@ class Book {
   List<String> categories;
   String MRP;
   String price;
+  int? quntity;
+  List<String>? ubid;
 
   factory Book.fromJson(Map<String, dynamic> json) => Book(
         title: json["title"],
@@ -54,6 +60,9 @@ class Book {
         categories: List<String>.from(json["categories"].map((x) => x)),
         MRP: json['MRP'],
         price: json['price'],
+      count:json['count'],
+    ubid: json['uidb']==null ? null: json["uidb"],
+      quntity : json['quntity']
       );
 
   Map<String, dynamic> toJson() => {
@@ -68,7 +77,9 @@ class Book {
         "authors": List<dynamic>.from(authors.map((x) => x)),
         "categories": List<dynamic>.from(categories.map((x) => x)),
         "MRP" : MRP,
-        "price" : price
+        "price" : price,
+        "count" : count,
+        "ubid" : ubid
       };
 }
 
