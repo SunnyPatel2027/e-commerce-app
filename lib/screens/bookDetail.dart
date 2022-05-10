@@ -1,7 +1,7 @@
 import 'package:e_commerce/controller/cart_controller.dart';
 import 'package:e_commerce/controller/firebase_controller.dart';
 import 'package:e_commerce/modals/book.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -14,10 +14,9 @@ import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'addToCart_screen.dart';
-import 'home_screen.dart';
 import 'my_order_screen.dart';
 
-class BookDetail extends StatelessWidget {
+class BookDetail extends StatefulWidget {
   final Book book;
   final bool isCart;
   var qty;
@@ -26,9 +25,56 @@ class BookDetail extends StatelessWidget {
       : super(key: key);
 
   @override
+  State<BookDetail> createState() => _BookDetailState();
+}
+
+class _BookDetailState extends State<BookDetail> {
+  var _razorpay = Razorpay();
+
+  FirebaseController firebasecontroller = Get.find<FirebaseController>();
+  CartController cartController = Get.find<CartController>();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    super.initState();
+  }
+
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Do something when payment succeeds
+    Get.snackbar("success", "Pay ment succeeds",snackPosition: SnackPosition.BOTTOM,duration: Duration(seconds: 2));
+    cartController.buyProduct(widget.book, widget.qty);
+      cartController.removeCart(widget.book);
+      Get.back();
+
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Do something when payment fails
+    Get.snackbar("Payment fails",'Something want wrong',snackPosition: SnackPosition.BOTTOM,duration: Duration(seconds: 2));
+
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // Do something when an external wallet was selected
+    Get.snackbar("Extrnal Wallet was selected", "${response}",snackPosition: SnackPosition.BOTTOM,duration: Duration(seconds: 2));
+
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _razorpay.clear();
+  }
+  String name = "";
+  String? email = '';
+  @override
   Widget build(BuildContext context) {
-    FirebaseController firebasecontroller = Get.find<FirebaseController>();
-    CartController cartController = Get.find<CartController>();
     return SafeArea(
       child: Scaffold(
         drawer: Drawer(
@@ -74,7 +120,6 @@ class BookDetail extends StatelessWidget {
                       FutureBuilder<SharedPreferences>(
                           future: SharedPreferences.getInstance(),
                           builder: (context, snapshot) {
-                            String name = "";
                             if (snapshot.hasData) {
                               final prefs = snapshot.data;
                               name = prefs?.getString("username") ?? "";
@@ -91,7 +136,7 @@ class BookDetail extends StatelessWidget {
                       FutureBuilder<SharedPreferences>(
                           future: SharedPreferences.getInstance(),
                           builder: (context, snapshot) {
-                            String? email = '';
+
                             if (snapshot.hasData) {
                               final prefs = snapshot.data;
                               email = prefs?.getString("email") ?? "";
@@ -201,7 +246,7 @@ class BookDetail extends StatelessWidget {
                       child: Container(
                         // width: double.infinity,
                         child: Text(
-                          "${book.title}",
+                          "${widget.book.title}",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.indigoAccent,
@@ -216,7 +261,7 @@ class BookDetail extends StatelessWidget {
                   height: 10,
                 ),
                 Wrap(
-                  children: book.authors
+                  children: widget.book.authors
                       .map((e) => e.isEmpty
                           ? SizedBox()
                           : Container(
@@ -247,14 +292,14 @@ class BookDetail extends StatelessWidget {
                     decoration: BoxDecoration(
                         // color: Colors.red.shade200,
                         borderRadius: BorderRadius.circular(25)),
-                    child: book.thumbnailUrl == null
+                    child: widget.book.thumbnailUrl == null
                         ? Center(
                             child: Icon(
                             Icons.broken_image_outlined,
                             size: 80,
                           ))
                         : Image.network(
-                            book.thumbnailUrl.toString(),
+                            widget.book.thumbnailUrl.toString(),
                             fit: BoxFit.fill,
                           ),
                   ),
@@ -269,7 +314,7 @@ class BookDetail extends StatelessWidget {
                           children: [
                             // ${(int.parse((book.price)) * 100 / int.parse((book.MRP))).toStringAsFixed(0)}
                             Text(
-                              "${(int.parse(book.price) * 100 / int.parse(book.MRP)).toStringAsFixed(0)}%",
+                              "${(int.parse(widget.book.price) * 100 / int.parse(widget.book.MRP)).toStringAsFixed(0)}%",
                               style: TextStyle(color: Colors.white),
                             ),
                             Text("off", style: TextStyle(color: Colors.white)),
@@ -284,7 +329,7 @@ class BookDetail extends StatelessWidget {
                       style: TextStyle(color: Colors.black87),
                     ),
                     Text(
-                      "${book.MRP}",
+                      "${widget.book.MRP}",
                       style: TextStyle(
                           color: Colors.black87,
                           decoration: TextDecoration.lineThrough),
@@ -294,7 +339,7 @@ class BookDetail extends StatelessWidget {
                 SizedBox(
                   height: 9,
                 ),
-                isCart == true
+                widget.isCart == true
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -306,7 +351,7 @@ class BookDetail extends StatelessWidget {
                                     color: Colors.black87, fontSize: 14),
                               ),
                               Text(
-                                " ₹${book.price}",
+                                " ₹${widget.book.price}",
                                 style:
                                     TextStyle(color: Colors.red, fontSize: 18),
                               ),
@@ -320,7 +365,7 @@ class BookDetail extends StatelessWidget {
                                     color: Colors.black87, fontSize: 14),
                               ),
                               Text(
-                                " ${qty}",
+                                " ${widget.qty}",
                                 style: TextStyle(
                                     color: Colors.redAccent, fontSize: 18),
                               ),
@@ -336,7 +381,7 @@ class BookDetail extends StatelessWidget {
                                 TextStyle(color: Colors.black87, fontSize: 14),
                           ),
                           Text(
-                            " ₹${book.price}",
+                            " ₹${widget.book.price}",
                             style: TextStyle(color: Colors.red, fontSize: 18),
                           ),
                         ],
@@ -344,7 +389,7 @@ class BookDetail extends StatelessWidget {
                 SizedBox(
                   height: 8,
                 ),
-                isCart == true
+                widget.isCart == true
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -358,7 +403,7 @@ class BookDetail extends StatelessWidget {
                                     fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                " ₹${int.parse(book.price) * qty}",
+                                " ₹${int.parse(widget.book.price) * widget.qty}",
                                 style: TextStyle(
                                     color: Colors.red,
                                     fontSize: 20,
@@ -374,7 +419,7 @@ class BookDetail extends StatelessWidget {
                                     color: Colors.black87, fontSize: 14),
                               ),
                               Text(
-                                " ₹${int.parse(book.MRP) - int.parse(book.price)}",
+                                " ₹${int.parse(widget.book.MRP) - int.parse(widget.book.price)}",
                                 style:
                                     TextStyle(color: Colors.red, fontSize: 15),
                               ),
@@ -390,7 +435,7 @@ class BookDetail extends StatelessWidget {
                                 TextStyle(color: Colors.black87, fontSize: 14),
                           ),
                           Text(
-                            " ₹${int.parse(book.MRP) - int.parse(book.price)}",
+                            " ₹${int.parse(widget.book.MRP) - int.parse(widget.book.price)}",
                             style: TextStyle(color: Colors.red, fontSize: 18),
                           ),
                         ],
@@ -398,12 +443,21 @@ class BookDetail extends StatelessWidget {
                 SizedBox(
                   height: 8,
                 ),
-                isCart == true
+                widget.isCart == true
                     ? GestureDetector(
                         onTap: () async {
-                          cartController.buyProduct(book, qty);
-                          cartController.removeCart(book);
-                          Get.back();
+                          print("name : $name , email : $email");
+                          var options = {
+                            'key': 'rzp_test_FzBmDEtXgnmbJK',
+                            'amount': ((widget.qty*int.parse(widget.book.price))*100).toString(),
+                            'name': '$name',
+                            'description': '',
+                            'prefill': {
+                              'contact': '',
+                              'email': '$email'
+                            }
+                          };
+                          _razorpay.open(options);
                         },
                         child: Container(
                           height: 55,
@@ -438,11 +492,11 @@ class BookDetail extends StatelessWidget {
                             });
                             print(doc);
                           }
-                          return doc.contains(book.isbn)
+                          return doc.contains(widget.book.isbn)
                               ? SizedBox()
                               : Column(
                                   children: [
-                                    doc.contains(book.isbn)?SizedBox():
+                                    doc.contains(widget.book.isbn)?SizedBox():
                                     GestureDetector(
                                       onTap: () async {
                                         List productName = [];
@@ -453,7 +507,7 @@ class BookDetail extends StatelessWidget {
                                                 .doc(firebasecontroller.user)
                                                 .collection("Cart")
                                                 .where("isbn",
-                                                    isEqualTo: book.isbn)
+                                                    isEqualTo: widget.book.isbn)
                                                 .get();
                                         data.docs.forEach((field) {
                                           String id =
@@ -461,13 +515,13 @@ class BookDetail extends StatelessWidget {
                                           productName.add(id);
                                         });
                                         print("productName $productName");
-                                        if (productName.contains(book.isbn)) {
+                                        if (productName.contains(widget.book.isbn)) {
                                           Get.snackbar("ALREADY ADDED",
                                               "You already add this product.",
                                               snackPosition:
                                                   SnackPosition.BOTTOM);
                                         } else {
-                                          cartController.addProduct(book);
+                                          cartController.addProduct(widget.book);
                                         }
                                       },
                                       child: Container(
@@ -494,7 +548,17 @@ class BookDetail extends StatelessWidget {
                                     ),
                                     GestureDetector(
                                       onTap: () async {
-                                        cartController.buyProduct(book, qty);
+                                        var options = {
+                                          'key': 'rzp_test_FzBmDEtXgnmbJK',
+                                          'amount': ((int.parse(widget.book.price))*100).toString(),
+                                          'name': '$name',
+                                          'description': '',
+                                          'prefill': {
+                                            'contact': '',
+                                            'email': '$email'
+                                          }
+                                        };
+                                        _razorpay.open(options);
                                       },
                                       child: Container(
                                         height: 55,
@@ -548,7 +612,7 @@ class BookDetail extends StatelessWidget {
                       SizedBox(
                         height: 5,
                       ),
-                      Text("${book.longDescription}",
+                      Text("${widget.book.longDescription}",
                           style: TextStyle(
                               fontSize: 17,
                               fontStyle: FontStyle.italic,

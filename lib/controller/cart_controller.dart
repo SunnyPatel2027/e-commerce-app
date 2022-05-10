@@ -8,6 +8,7 @@ import 'firebase_controller.dart';
 
 class CartController extends GetxController {
   final firebaseController = Get.find<FirebaseController>();
+  List totalAmount = [].obs;
 
   void buyProduct(Book product, qty) async {
     await FirebaseFirestore.instance
